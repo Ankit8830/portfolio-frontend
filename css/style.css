@@ -516,6 +516,7 @@ textarea:focus-visible {
 .chip--code    { bottom: 20%; left: -8%; }
 .chip--gsap    { bottom: 4%; right: 10%; }
 .chip--dam     { top: 50%; left: -14%; }
+.chip--sfmc     { top: 60%; right: -12%; }
 
 /* Scroll cue at the bottom of the hero */
 .scroll-cue {
