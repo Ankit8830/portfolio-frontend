@@ -1,0 +1,841 @@
+/* =================================================================
+   PORTFOLIO STYLESHEET
+   Structure of this file (read top to bottom):
+   1. CSS Custom Properties (design tokens)   -> change theme from ONE place
+   2. Reset / base element styles
+   3. Reusable utility classes (.btn, .mono, .tag-list, etc.)
+   4. Layout components (navbar, hero, sections, cards, footer)
+   5. Animation-support classes (things JS toggles/targets)
+   6. Responsive media queries (tablet + mobile)
+   ================================================================= */
+
+/* -----------------------------------------------------------------
+   1. DESIGN TOKENS (CSS Custom Properties / "CSS variables")
+   WHY: every color, font and spacing value used across the whole site
+   is defined ONCE here. If you want to re-theme the entire portfolio
+   (e.g. change the accent color from cyan to green), you only need to
+   edit the values in this block instead of hunting through every rule.
+----------------------------------------------------------------- */
+:root {
+  /* --- Colors: dark, futuristic "creative developer" palette --- */
+  --bg-deep: #05070d;        /* page background - near-black navy, not pure black (pure black feels flat/cheap) */
+  --bg-panel: #0d1220;       /* slightly lighter panel background for cards/nav */
+  --bg-panel-2: #10192e;     /* used for hover states / alt panels */
+  --border-soft: rgba(255, 255, 255, 0.08); /* subtle hairline borders on dark backgrounds */
+
+  --accent-cyan: #00e5ff;    /* primary accent - "code/terminal" cyan */
+  --accent-violet: #7c5cff;  /* secondary accent - creative/gradient partner to cyan */
+  --accent-amber: #ffb020;   /* tertiary accent used sparingly for CTA emphasis */
+
+  --text-primary: #e9edf7;   /* main body/heading text on dark background */
+  --text-muted: #8b93a7;     /* secondary/supporting text (subtitles, descriptions) */
+
+  /* Gradients built from the accent colors above.
+     Defined once here so hero text, buttons, and borders can all
+     reference the exact same gradient for visual consistency. */
+  --gradient-primary: linear-gradient(120deg, var(--accent-cyan), var(--accent-violet));
+  --gradient-glow: radial-gradient(circle, rgba(0,229,255,0.35), transparent 70%);
+
+  /* --- Typography --- */
+  --font-display: 'Sora', sans-serif;       /* headings */
+  --font-body: 'Inter', sans-serif;         /* paragraphs, UI text */
+  --font-mono: 'JetBrains Mono', monospace; /* eyebrows, tags, code-like accents */
+
+  /* --- Spacing scale ---
+     Using a consistent scale (instead of random px values everywhere)
+     keeps vertical rhythm consistent across every section. */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 7rem;
+
+  /* --- Layout --- */
+  --max-width: 1180px;       /* max content width, keeps lines readable on big monitors */
+  --radius-md: 14px;         /* standard corner radius for cards/buttons */
+  --radius-lg: 24px;
+
+  /* --- Motion ---
+     Central place to control default transition speed/easing for
+     simple CSS hover states (GSAP animations are controlled separately
+     in script.js, but plain CSS transitions - like link color changes -
+     use these variables so they all feel consistent). */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 0.25s var(--ease-standard);
+}
+
+/* -----------------------------------------------------------------
+   2. RESET / BASE STYLES
+   WHY: browsers apply different default margins/paddings/font-sizes.
+   A small reset makes the site look consistent across Chrome, Firefox,
+   Safari, etc. Removing this block would cause inconsistent spacing
+   and unexpected scrollbars (from default <body> margin) across browsers.
+----------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box; /* padding/border are included IN the element's width, not added on top - makes layout math predictable */
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: auto; /* smooth scrolling is handled by JS (Lenis-style easing via GSAP),
+                             so we deliberately do NOT use CSS "smooth" here to avoid the
+                             two systems fighting each other. */
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden; /* prevents horizontal scrollbar caused by animated/absolutely positioned decorative elements */
+  cursor: default;
+}
+
+/* Hide the native cursor on devices with a fine pointer (mouse) so our
+   custom cursor dot/ring (see below) can take over. On touch devices this
+   rule is skipped via the media query so mobile users keep normal behaviour. */
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+  a, button { cursor: none; }
+}
+
+img { max-width: 100%; display: block; }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul { list-style: none; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+/* Visible keyboard focus outline (accessibility).
+   WHY: since we hide the mouse cursor for style, we must make sure
+   keyboard users (Tab key) can still clearly see which element is focused.
+   Removing this would make the site unusable via keyboard navigation. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+}
+
+/* Respect users who have "reduce motion" enabled in their OS settings.
+   WHY: some visitors experience discomfort/motion sickness from large
+   animations. This rule forces (almost) all CSS transitions/animations
+   to be nearly instant for them. Our GSAP script.js ALSO checks this
+   same media query in JS (see prefersReducedMotion) so the heavier
+   JS-driven animations are skipped too, not just CSS ones. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -----------------------------------------------------------------
+   3. REUSABLE UTILITY CLASSES
+----------------------------------------------------------------- */
+
+.mono { font-family: var(--font-mono); }
+
+/* Gradient text effect used on the hero name.
+   HOW IT WORKS: background-clip:text clips the gradient background so it
+   only shows through the shape of the text glyphs, then we make the
+   actual text color transparent so the gradient shows through instead. */
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Small label used above headings, e.g. "01 — Email Development".
+   The pulsing dot inside it (.dot-pulse) is pure CSS (@keyframes below),
+   not GSAP, because it's a simple infinite loop that doesn't need JS control. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-bottom: var(--space-sm);
+}
+
+.dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  animation: pulse 2s ease-in-out infinite; /* infinite = loops forever; remove this to make the dot static */
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,255,0.5); }
+  50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(0,229,255,0); }
+}
+
+/* Generic tag list used for skills/tools bullet lists */
+.tag-list li {
+  position: relative;
+  padding-left: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+.tag-list li::before {
+  content: '▹';               /* small arrow bullet - reinforces the "developer/terminal" motif */
+  position: absolute;
+  left: 0;
+  color: var(--accent-cyan);
+}
+.tag-list--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: var(--space-sm);
+}
+.tag-list--inline li {
+  padding: 0.3rem 0.7rem;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+.tag-list--inline li::before { content: none; } /* remove arrow bullet for the pill/chip style */
+
+/* Buttons.
+   .btn is the shared base; .btn-primary / .btn-ghost are modifiers.
+   This "base + modifier" pattern (similar to BEM) avoids duplicating
+   padding/radius/font rules for every button variant. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.8rem;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast); /* transform/box-shadow are ALSO animated by GSAP on hover via the .magnetic class in JS - these CSS transitions act as a fallback/smoothing layer */
+  will-change: transform; /* hints the browser to optimise this element for movement (GPU layer) - improves animation smoothness */
+}
+.btn-primary {
+  background: var(--gradient-primary);
+  color: #04060b;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 28px rgba(0,229,255,0.45);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+}
+.btn-ghost:hover {
+  border-color: var(--accent-cyan);
+}
+
+/* Section container widths - reused by every section for consistent
+   left/right margins and max content width on huge monitors. */
+.section-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+.section-inner--narrow { max-width: 720px; }
+
+/* -----------------------------------------------------------------
+   4. CUSTOM CURSOR
+   Two elements: a small solid dot that follows the mouse exactly, and
+   a larger ring that follows with a slight delay (lag), created using
+   GSAP's quickTo() in script.js. The lag is what makes it feel "alive"
+   instead of robotically snapping to the pointer.
+----------------------------------------------------------------- */
+.cursor-dot, .cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none; /* CRITICAL: without this, the cursor elements would block clicks on whatever is underneath them */
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+}
+.cursor-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+}
+.cursor-ring {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,229,255,0.5);
+  transition: width 0.2s, height 0.2s, border-color 0.2s; /* smooths the ring's own size change when it grows on hover (see .cursor-hover in JS) */
+}
+/* Hide custom cursor entirely on touch devices (no real mouse pointer) */
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot, .cursor-ring { display: none; }
+}
+
+/* -----------------------------------------------------------------
+   PRELOADER
+----------------------------------------------------------------- */
+.preloader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.preloader-tag {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--accent-cyan);
+  animation: blink 1s steps(2) infinite; /* steps(2) = hard on/off flicker like a terminal cursor, not a smooth fade */
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* -----------------------------------------------------------------
+   NAVBAR
+----------------------------------------------------------------- */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(5, 7, 13, 0.7);
+  backdrop-filter: blur(12px); /* frosted-glass effect over content scrolling underneath */
+  border-bottom: 1px solid var(--border-soft);
+}
+.nav-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1rem var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+.logo-bracket { color: var(--accent-cyan); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+.nav-links a {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+  position: relative;
+}
+.nav-links a:hover { color: var(--text-primary); }
+.nav-cta {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 999px;
+  color: var(--accent-cyan) !important;
+}
+
+/* Hamburger button - hidden on desktop, shown on mobile (see media query) */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  width: 28px;
+}
+.nav-toggle span {
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+/* When JS adds .is-open to the nav (hamburger clicked), morph the 3 bars
+   into an "X" shape using rotate/translate transforms + hide the middle bar. */
+.nav-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle.is-open span:nth-child(2) { opacity: 0; }
+.nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* -----------------------------------------------------------------
+   HERO SECTION
+----------------------------------------------------------------- */
+.hero {
+  position: relative;
+  min-height: 100vh; /* fills the full viewport height on load - the "first impression" section */
+  display: flex;
+  align-items: center;
+  padding: 6rem var(--space-lg) 4rem;
+  overflow: hidden; /* clips the glow blobs so they don't create scrollbars if they extend past the edge */
+}
+
+/* Ambient background glow blobs - purely decorative atmosphere.
+   Positioned absolutely and blurred heavily so they read as soft light,
+   not hard-edged circles. */
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-glow--1 {
+  width: 480px; height: 480px;
+  background: var(--accent-violet);
+  top: -120px; left: -120px;
+}
+.hero-glow--2 {
+  width: 420px; height: 420px;
+  background: var(--accent-cyan);
+  bottom: -160px; right: -80px;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr; /* text column slightly wider than visual column */
+  gap: var(--space-xl);
+  align-items: center;
+}
+
+.hero-title {
+  font-size: clamp(2.4rem, 5vw, 3.6rem); /* clamp() = fluid font size that scales with viewport but never goes below/above the min/max - removes the need for separate font-size rules per breakpoint */
+  margin-bottom: var(--space-sm);
+}
+.hero-role {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+.role-sep { color: var(--accent-violet); margin: 0 0.3rem; }
+
+.hero-intro {
+  color: var(--text-muted);
+  max-width: 46ch; /* character-based width keeps line length readable regardless of font size */
+  margin-bottom: var(--space-lg);
+}
+.hero-cta {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* --- Hero visual (right column) ---
+   All positions are relative to this container, which is a fixed-size
+   square. Every child (.orbit-ring, .float-chip, .hero-core) is
+   absolutely positioned inside it so GSAP can move them independently. */
+.hero-visual {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1; /* keeps it perfectly square at any screen width */
+  margin: 0 auto;
+}
+
+.hero-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 60px rgba(0,229,255,0.45);
+  transform: translate(-50%, -50%); /* centers the element on its own top/left point, standard technique for perfect absolute centering */
+}
+.hero-core-glyph {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: #04060b;
+  font-size: 1.4rem;
+}
+
+/* Orbit rings - decorative circles that GSAP slowly rotates 360°.
+   border uses a partial/transparent style so it looks like a "scanner"
+   ring rather than a solid circle. */
+.orbit-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  border: 1px dashed var(--border-soft);
+  transform: translate(-50%, -50%);
+}
+.orbit-ring--outer { width: 100%; height: 100%; border-color: rgba(0,229,255,0.25); }
+.orbit-ring--inner { width: 68%; height: 68%; border-color: rgba(124,92,255,0.3); }
+
+/* Floating skill chips.
+   Positioned using percentage-based top/left so they scale proportionally
+   with the .hero-visual container at any screen size. GSAP later animates
+   their y-position and rotation for the floating effect (see script.js). */
+.float-chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: rgba(13, 18, 32, 0.85);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.chip-icon { color: var(--accent-cyan); }
+.chip--email   { top: 4%;  left: 6%; }
+.chip--banner  { top: 18%; right: -4%; }
+.chip--code    { bottom: 20%; left: -8%; }
+.chip--gsap    { bottom: 4%; right: 10%; }
+.chip--dam     { top: 50%; left: -14%; }
+
+/* Scroll cue at the bottom of the hero */
+.scroll-cue {
+  position: absolute;
+  bottom: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  z-index: 1;
+}
+.scroll-cue span {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(var(--accent-cyan), transparent);
+}
+.scroll-cue p {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* -----------------------------------------------------------------
+   GENERIC SECTION SPACING
+----------------------------------------------------------------- */
+.section {
+  padding: var(--space-2xl) 0;
+  position: relative;
+}
+.section--alt {
+  background: linear-gradient(180deg, transparent, rgba(124,92,255,0.04), transparent); /* very subtle tint to visually separate alternating sections without a hard line */
+}
+.section--tight { padding: var(--space-xl) 0; }
+
+.section-head { max-width: 640px; margin-bottom: var(--space-xl); }
+.section-title {
+  font-size: clamp(1.8rem, 3.6vw, 2.6rem);
+  margin-bottom: var(--space-sm);
+}
+.section-sub { color: var(--text-muted); }
+
+/* -----------------------------------------------------------------
+   INFO GRID (skills/platforms/tools cards)
+----------------------------------------------------------------- */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.info-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+.info-card h3 {
+  font-size: 1.05rem;
+  margin-bottom: var(--space-sm);
+  color: var(--accent-cyan);
+}
+
+/* -----------------------------------------------------------------
+   TYPE SPLIT (Static vs Dynamic banner cards)
+----------------------------------------------------------------- */
+.type-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.type-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+.type-card h3 { margin-bottom: var(--space-sm); }
+.type-card p { color: var(--text-muted); }
+.type-card--accent {
+  border-color: rgba(0,229,255,0.35);
+  background: linear-gradient(160deg, rgba(0,229,255,0.06), rgba(124,92,255,0.06));
+}
+
+/* -----------------------------------------------------------------
+   PROJECT CARDS + REUSABLE PLACEHOLDER
+   .project-card is the reusable "component" mentioned in the HTML
+   comments. Its hover lift/glow/scale is driven by GSAP
+   (see js/script.js -> initCardHoverAnimations) rather than CSS :hover,
+   because GSAP gives smoother control over multiple properties at once
+   (y-position, scale and box-shadow together) with an easing curve that
+   plain CSS transitions can't replicate as fluidly.
+----------------------------------------------------------------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+.card-grid--single { grid-template-columns: 1fr; max-width: 420px; }
+
+.project-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  will-change: transform; /* GPU-accelerates the transform changes GSAP applies on hover */
+}
+
+/* The reusable placeholder box. Swap its inner content for a real
+   <img>/<embed> later - the fixed aspect-ratio + centered flex layout
+   will still apply automatically to whatever you put inside, as long
+   as you keep (or adapt) the same class. */
+.placeholder-box {
+  aspect-ratio: 16 / 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 10px, transparent 10px 20px), /* subtle diagonal hatch pattern signals "placeholder", not a real image */
+    var(--bg-panel-2);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-soft);
+}
+.placeholder-icon { font-size: 1.6rem; opacity: 0.6; }
+
+.project-card-body { padding: var(--space-md); }
+.project-tag {
+  font-size: 0.75rem;
+  color: var(--accent-violet);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.project-title { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.project-desc { color: var(--text-muted); font-size: 0.9rem; }
+
+/* -----------------------------------------------------------------
+   MARQUEE (tech strip)
+   Two identical tracks placed side by side inside a flex row; GSAP
+   translates the whole row left continuously. Because the tracks are
+   identical, once the first track has scrolled fully out of view the
+   second is in exactly the position the first started in - creating
+   a seamless infinite loop illusion.
+----------------------------------------------------------------- */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  padding: var(--space-md) 0;
+}
+.marquee-track {
+  display: flex;
+  flex-shrink: 0; /* prevents the track from shrinking to fit - it must keep its natural full width for the loop math to work */
+  gap: var(--space-xl);
+  padding-right: var(--space-xl);
+}
+.marquee-track span {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------
+   CONTACT FORM
+----------------------------------------------------------------- */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+.form-row { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-row label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.form-row input,
+.form-row textarea {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast);
+  resize: vertical; /* allows the textarea to be resized vertically only, keeps layout width stable */
+}
+.form-row input:focus,
+.form-row textarea:focus {
+  border-color: var(--accent-cyan);
+  outline: none; /* default outline removed here since focus-visible rule above provides a clearer custom one */
+}
+.contact-form .btn { align-self: flex-start; }
+
+/* Status message shown after submit (success or error).
+   Hidden by default (opacity/height collapsed) and revealed by JS adding
+   .is-visible - this keeps it from taking up empty vertical space before
+   the visitor has actually submitted anything. */
+.form-status {
+  font-size: 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: max-height var(--transition-fast), opacity var(--transition-fast), padding var(--transition-fast);
+}
+.form-status.is-visible {
+  max-height: 100px;
+  opacity: 1;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
+/* Two color states: success (greenish/cyan) vs error (warm/red) so the
+   visitor can tell the outcome at a glance without reading closely. */
+.form-status--success {
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: var(--accent-cyan);
+}
+.form-status--error {
+  background: rgba(255, 90, 90, 0.08);
+  border: 1px solid rgba(255, 90, 90, 0.35);
+  color: #ff8c8c;
+}
+
+/* Disabled/loading state for the submit button while the request is
+   in flight - prevents the visitor from double-clicking and sending
+   the same message twice. Cursor/opacity changes give a clear visual cue. */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none; /* also blocks the magnetic hover effect from still running while disabled */
+}
+
+/* -----------------------------------------------------------------
+   FOOTER
+----------------------------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--border-soft);
+  padding: var(--space-lg) 0;
+}
+.footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.footer-links a { color: var(--accent-cyan); }
+
+/* -----------------------------------------------------------------
+   6. RESPONSIVE BREAKPOINTS
+   Mobile-first vs desktop-first debate aside: this file was written
+   desktop-first (base styles = desktop) with max-width overrides below,
+   because the hero's animated visual is genuinely a "desktop-enhanced"
+   piece that needs to gracefully SIMPLIFY on small screens rather than
+   scale down as-is.
+----------------------------------------------------------------- */
+
+/* --- Tablet (<=1024px) --- */
+@media (max-width: 1024px) {
+  .hero-inner { grid-template-columns: 1fr; text-align: center; }
+  .hero-cta { justify-content: center; }
+  .hero-visual { margin-top: var(--space-xl); max-width: 340px; }
+  .info-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- Mobile (<=768px) --- */
+@media (max-width: 768px) {
+  /* Collapse nav links into a full-screen dropdown panel, toggled by JS
+     adding/removing the .is-open class on #navLinks. */
+  .nav-toggle { display: flex; }
+  .nav-links {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--bg-panel);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-md) var(--space-lg);
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--border-soft);
+    /* Hidden by default via clip-path + opacity (rather than display:none)
+       so that IF we later want to animate the menu opening with GSAP, it
+       already has animatable properties instead of an abrupt show/hide. */
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+    pointer-events: none;
+    transition: clip-path var(--transition-fast), opacity var(--transition-fast);
+  }
+  .nav-links.is-open {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .type-split { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .card-grid { grid-template-columns: 1fr; }
+
+  .hero { padding-top: 7rem; }
+  .hero-visual { max-width: 280px; }
+  .float-chip { font-size: 0.65rem; padding: 0.4rem 0.6rem; }
+}

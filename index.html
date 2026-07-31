@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<!--
+  =============================================================
+  PORTFOLIO LANDING PAGE
+  Role: Email Developer | HTML5 Banner Developer | Digital Asset Management Specialist
+  =============================================================
+  WHY THIS FILE STRUCTURE:
+  - index.html   -> content & structure only (semantic HTML5)
+  - css/style.css -> ALL visual styling, layout, responsive rules
+  - js/script.js  -> ALL behaviour: GSAP animations, ScrollTrigger, smooth scroll, menu toggle
+
+  Keeping these three concerns separate (HTML / CSS / JS) is a core web
+  development practice. If you removed this separation and put everything
+  inline in one file, the code would still technically work, but it would be
+  much harder to read, reuse, and debug as the project grows.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- viewport meta tag: tells mobile browsers to use the device's actual width
+       instead of pretending to be a desktop screen. Removing this would make
+       the site render "zoomed out" and broken on phones/tablets. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Developer &amp; Digital Creative Developer | Portfolio</title>
+  <meta name="description" content="Portfolio of an Email Developer, HTML5 Banner Developer and Digital Asset Management Specialist." />
+
+  <!-- ===========================================================
+       GOOGLE FONTS
+       - Sora: used for headings / display text (geometric, modern -> "developer/creative" tone)
+       - Inter: used for body copy (very readable at small sizes)
+       - JetBrains Mono: used for small "tag" labels, eyebrows and code-like accents
+         (reinforces the "developer" identity throughout the page)
+       Why load 3 fonts instead of 1: each font has a *job*. Mixing a display,
+       body, and mono face gives the page visual hierarchy without needing
+       extra colors or boxes to separate content types.
+  =========================================================== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Our own stylesheet. Loaded in <head> so styles are ready before content paints
+       (prevents a "flash of unstyled content"). -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===========================================================
+       CUSTOM CURSOR (decorative, desktop only)
+       WHY: reinforces the "futuristic creative developer" feel.
+       If removed: the browser's default arrow cursor is used everywhere,
+       the site still works perfectly, this is purely a visual flourish.
+       Controlled/animated from js/script.js using GSAP's quickTo() for
+       ultra-smooth cursor following.
+  =========================================================== -->
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+  <!-- ===========================================================
+       PRELOADER
+       WHY: fonts + GSAP need a moment to load. Showing a simple loading
+       animation avoids the visitor seeing unstyled text pop in ("FOUC").
+       If removed: page still works, but the first paint may look jumpy.
+       Controlled by js/script.js -> hides itself once window has loaded.
+  =========================================================== -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <span class="preloader-tag">&lt;/&gt;</span>
+  </div>
+
+  <!-- ===========================================================
+       NAVIGATION BAR
+       - position:fixed via CSS so it stays visible while scrolling
+       - "data-scroll" links are used by js/script.js for smooth scrolling
+       - the mobile hamburger button toggles a class in JS (no animation
+         library needed for this, plain CSS transition is enough -
+         GSAP is reserved for the "big" animations)
+  =========================================================== -->
+  <header class="navbar" id="navbar">
+    <div class="nav-inner">
+      <!-- Logo / brand mark. Using a mono font + brackets to look like a code tag,
+           tying back to the "developer" identity. -->
+      <a href="#hero" class="logo" data-scroll>
+        <span class="logo-bracket">&lt;</span>DEV<span class="logo-bracket">/&gt;</span>
+      </a>
+
+      <!-- Primary navigation. Each <a> has data-scroll so our JS smooth-scroll
+           function knows to intercept its click instead of letting the
+           browser jump instantly. -->
+      <nav class="nav-links" id="navLinks">
+        <a href="#email-dev" data-scroll>Email Dev</a>
+        <a href="#banner-dev" data-scroll>HTML5 Banners</a>
+        <a href="#digital-creative" data-scroll>Digital Creative</a>
+        <a href="#skills" data-scroll>Skills</a>
+        <a href="#resume" data-scroll>Resume</a>
+        <a href="#contact" data-scroll class="nav-cta">Contact</a>
+      </nav>
+
+      <!-- Hamburger button: only visible on small screens (see CSS media query).
+           aria-controls + aria-expanded are accessibility attributes so screen
+           readers understand this button opens/closes the nav menu. -->
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===========================================================
+       MAIN CONTENT
+       Wrapping everything in <main> is a semantic HTML5 best practice:
+       it tells assistive tech "this is the primary content of the page"
+       (as opposed to header/nav/footer).
+  =========================================================== -->
+  <main>
+
+    <!-- =========================================================
+         HERO SECTION
+         Purpose: the very first thing a visitor sees. Must communicate
+         WHO you are and WHAT you do in under 3 seconds, plus give two
+         clear next actions (View Work / Contact Me).
+    ========================================================= -->
+    <section class="hero" id="hero">
+      <!-- Background gradient glow blobs (pure CSS, GPU-cheap).
+           These are separate from the GSAP-animated visual on the right;
+           they just add ambient color to the whole hero background. -->
+      <div class="hero-glow hero-glow--1" aria-hidden="true"></div>
+      <div class="hero-glow hero-glow--2" aria-hidden="true"></div>
+
+      <div class="hero-inner">
+        <!-- LEFT COLUMN: text content -->
+        <div class="hero-copy">
+          <!-- .eyebrow = small mono-font label above the headline.
+               data-anim-hero marks elements that our GSAP hero timeline
+               will animate in on page load (see js/script.js). -->
+          <p class="eyebrow" data-anim-hero>
+            <span class="dot-pulse" aria-hidden="true"></span>
+            Available for new roles &amp; collaborations
+          </p>
+
+          <!-- Main name/headline. Split into two lines with a <span> around
+               the highlighted part so CSS can give it the gradient-text effect. -->
+          <h1 class="hero-title" data-anim-hero>
+            Hi, I'm <span class="gradient-text">Ankit Mishra</span>
+          </h1>
+
+          <!-- Role / title line -->
+          <h2 class="hero-role" data-anim-hero>
+            Email Developer <span class="role-sep">|</span> HTML5 Banner Developer <span class="role-sep">|</span> Digital Asset Management Specialist
+          </h2>
+
+          <!-- Short introduction paragraph, exactly as requested -->
+          <p class="hero-intro" data-anim-hero>
+            I create high-performing email campaigns, interactive HTML5 banners, and digital
+            experiences using modern development and animation techniques.
+          </p>
+
+          <!-- CTA button group -->
+          <div class="hero-cta" data-anim-hero>
+            <!-- "magnetic" class = JS adds a subtle magnetic hover pull with GSAP -->
+            <a href="#email-dev" class="btn btn-primary magnetic" data-scroll>
+              View My Work
+            </a>
+            <a href="#contact" class="btn btn-ghost magnetic" data-scroll>
+              Contact Me
+            </a>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: animated creative/developer visual
+             This whole block is animated by a dedicated GSAP timeline
+             called heroVisualTl (see js/script.js). It is built entirely
+             with SVG + CSS so it stays crisp on retina screens and scales
+             responsively without needing an image file. -->
+        <div class="hero-visual" aria-hidden="true">
+
+          <!-- Central rotating orbit ring (pure CSS conic-gradient ring) -->
+          <div class="orbit-ring orbit-ring--outer" data-float></div>
+          <div class="orbit-ring orbit-ring--inner" data-float></div>
+
+          <!-- Floating "chips" representing the developer's toolkit.
+               Each chip has data-float-item so GSAP can grab them all with
+               one selector and give each a slightly different floating
+               animation (see js/script.js -> floatingElements()). -->
+          <div class="float-chip chip--email" data-float-item>
+            <span class="chip-icon">✉</span> Email
+          </div>
+          <div class="float-chip chip--banner" data-float-item>
+            <span class="chip-icon">▭</span> HTML5 Banner
+          </div>
+          <div class="float-chip chip--code" data-float-item>
+            <span class="chip-icon">&lt;/&gt;</span> Code
+          </div>
+          <div class="float-chip chip--gsap" data-float-item>
+            <span class="chip-icon">✦</span> GSAP
+          </div>
+          <div class="float-chip chip--dam" data-float-item>
+            <span class="chip-icon">▤</span> DAM
+          </div>
+
+          <!-- Center gradient sphere - the visual "anchor" everything orbits around -->
+          <div class="hero-core">
+            <span class="hero-core-glyph">&lt;/&gt;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll-down indicator: purely decorative, hints there is more content below.
+           Animated with a simple looping GSAP tween (see js/script.js). -->
+      <div class="scroll-cue" aria-hidden="true">
+        <span></span>
+        <p>Scroll</p>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECTION 1: EMAIL DEVELOPMENT
+         Purpose: showcase email-specific expertise, ESP platforms,
+         QA tools, and example project cards.
+    ========================================================= -->
+    <section class="section" id="email-dev">
+      <div class="section-inner">
+
+        <!-- Section header: eyebrow + title. This eyebrow/title/subtitle
+             pattern repeats across all sections for visual consistency -
+             consistency is what makes a design feel "designed" rather than
+             randomly assembled. -->
+        <header class="section-head" data-reveal>
+          <p class="eyebrow mono">01 &mdash; Email Development</p>
+          <h2 class="section-title">Responsive Email &amp; Campaign Development</h2>
+          <p class="section-sub">
+            Building pixel-perfect, bulletproof HTML emails that render consistently
+            across every major inbox client and device.
+          </p>
+        </header>
+
+        <!-- ---------------------------------------------------
+             SKILLS / PLATFORMS GRID
+             Three cards: Expertise, ESP Platforms, Testing Tools.
+             Using a grid here (not a single paragraph) makes the
+             information scannable at a glance.
+        --------------------------------------------------- -->
+        <div class="info-grid" data-reveal>
+
+          <div class="info-card">
+            <h3>Core Expertise</h3>
+            <ul class="tag-list">
+              <li>Responsive Email Templates</li>
+              <li>Email Campaign Development</li>
+              <li>ESP Integration</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h3>Platforms</h3>
+            <ul class="tag-list">
+              <li>Salesforce Marketing Cloud (SFMC)</li>
+              <li>Mailchimp</li>
+              <li>SAP</li>
+              <li>Dynamics 365</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h3>Testing &amp; QA Tools</h3>
+            <ul class="tag-list">
+              <li>Email on Acid</li>
+              <li>Litmus</li>
+              <li>Validity</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ---------------------------------------------------
+             PROJECT CARDS
+             Each .project-card is a REUSABLE component. You can copy/paste
+             this exact block as many times as needed for future projects.
+             The `.placeholder-box` inside is intentionally empty so you can
+             later replace it with an <img>, an <embed> for a PDF, or a link,
+             WITHOUT touching any CSS or JS - the styling already handles it.
+
+             Hover animation (lift + glow + scale) is handled by GSAP in
+             js/script.js -> initCardHoverAnimations(). See the detailed
+             comment there for exactly which properties are tweened.
+        --------------------------------------------------- -->
+        <div class="card-grid">
+
+          <!-- Reusable card component #1 -->
+          <article class="project-card" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <!-- This text is only a placeholder. Replace this whole
+                   .placeholder-box div's content with:
+                     <img src="assets/your-screenshot.jpg" alt="..." />
+                   or an embedded PDF/link when real assets are ready. -->
+              <span class="placeholder-icon">🖼</span>
+              <p>[Add Email Screenshot/PDF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Marketing Email</p>
+              <h3 class="project-title">Campaign Email Project</h3>
+              <p class="project-desc">
+                Responsive marketing email developed for a global campaign, built
+                mobile-first with bulletproof table-based fallbacks for legacy clients.
+              </p>
+            </div>
+          </article>
+
+          <!-- Reusable card component #2 (duplicate structure, different dummy content -
+               shows how easily this component scales to more projects) -->
+          <article class="project-card" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">🖼</span>
+              <p>[Add Email Screenshot/PDF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Transactional Email</p>
+              <h3 class="project-title">Lifecycle Email Series</h3>
+              <p class="project-desc">
+                Automated welcome &amp; nurture series integrated with SFMC Journey
+                Builder, personalised with dynamic content blocks.
+              </p>
+            </div>
+          </article>
+
+          <!-- Reusable card component #3 -->
+          <article class="project-card" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">🖼</span>
+              <p>[Add Email Screenshot/PDF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">QA &amp; Testing</p>
+              <h3 class="project-title">Cross-Client Render Audit</h3>
+              <p class="project-desc">
+                Full Litmus/Email on Acid render pass across 40+ clients, fixing
+                dark-mode and Outlook-specific rendering issues.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECTION 2: HTML5 BANNER DEVELOPMENT
+         Split into Static + Dynamic banners, with tools and 3 dummy
+         projects. Cards reuse the same hover animation system.
+    ========================================================= -->
+    <section class="section section--alt" id="banner-dev">
+      <div class="section-inner">
+
+        <header class="section-head" data-reveal>
+          <p class="eyebrow mono">02 &mdash; HTML5 Banner Development</p>
+          <h2 class="section-title">HTML5 Interactive Banner Development</h2>
+          <p class="section-sub">
+            From static display ads to fully dynamic, data-driven banner campaigns.
+          </p>
+        </header>
+
+        <!-- Two-column split: Static vs Dynamic. Using a simple grid of
+             two "type cards" instead of a table keeps this visually
+             consistent with the rest of the page. -->
+        <div class="type-split" data-reveal>
+          <div class="type-card">
+            <h3>Static HTML5 Banners</h3>
+            <p>
+              Hand-coded, lightweight display ads optimised for fast load times and
+              strict ad-network file-size limits, exported clean and ready for trafficking.
+            </p>
+          </div>
+          <div class="type-card type-card--accent">
+            <h3>Dynamic HTML5 Banners</h3>
+            <p>
+              Data-driven, template-based banners that swap copy, pricing, or imagery
+              automatically at scale using feeds and data binding.
+            </p>
+            <ul class="tag-list tag-list--inline">
+              <li>GSAP</li>
+              <li>Google Web Designer (GWD)</li>
+              <li>Google Studio</li>
+              <li>Data Binding</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Banner project cards -->
+        <div class="card-grid">
+
+          <article class="project-card project-card--banner" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">▭</span>
+              <p>[Add Banner Preview/GIF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Dynamic &middot; Celtra</p>
+              <h3 class="project-title">Marriott Dynamic Banner Campaign</h3>
+              <p class="project-desc">
+                Created 1,000 dynamic HTML5 banners using Celtra, driven by a single
+                master template and live data feed for scale.
+              </p>
+            </div>
+          </article>
+
+          <article class="project-card project-card--banner" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">▭</span>
+              <p>[Add Banner Preview/GIF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Dynamic &middot; Celtra</p>
+              <h3 class="project-title">WorldRemit Dynamic Banner Campaign</h3>
+              <p class="project-desc">
+                Created 96 dynamic banners using Celtra, localised across multiple
+                markets and currencies from one template system.
+              </p>
+            </div>
+          </article>
+
+          <article class="project-card project-card--banner" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">▭</span>
+              <p>[Add Banner Preview/GIF Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Adobe Animate</p>
+              <h3 class="project-title">Complex Animation Banners</h3>
+              <p class="project-desc">
+                Created advanced animation banners using Adobe Animate with complex
+                motion graphics and frame-by-frame sequencing.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECTION 3: DIGITAL CREATIVE / DIGITAL ASSET MANAGEMENT
+         The original brief was cut off after "SECTION 3: DIGITAL",
+         so this section is built to logically complete the title
+         already used in the hero: "Digital Asset Management Specialist".
+         Replace/expand this copy freely once you confirm exact scope.
+    ========================================================= -->
+    <section class="section" id="digital-creative">
+      <div class="section-inner">
+
+        <header class="section-head" data-reveal>
+          <p class="eyebrow mono">03 &mdash; Digital Creative &amp; Asset Management</p>
+          <h2 class="section-title">Digital Asset Management &amp; Creative Ops</h2>
+          <p class="section-sub">
+            Organising, versioning and delivering creative assets efficiently across
+            teams, markets and platforms.
+          </p>
+        </header>
+
+        <div class="info-grid" data-reveal>
+          <div class="info-card">
+            <h3>Digital Asset Management</h3>
+            <ul class="tag-list">
+              <li>Asset taxonomy &amp; metadata structuring</li>
+              <li>Version control for creative files</li>
+              <li>Brand-compliant asset libraries</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>Creative Development</h3>
+            <ul class="tag-list">
+              <li>Interactive digital experiences</li>
+              <li>Motion &amp; micro-interaction design</li>
+              <li>Prototyping with GSAP / CSS</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>Workflow &amp; Delivery</h3>
+            <ul class="tag-list">
+              <li>Cross-team creative handoff</li>
+              <li>QA &amp; trafficking documentation</li>
+              <li>Scalable template systems</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- One reusable project card so the section matches the visual
+             rhythm of Sections 1 & 2. -->
+        <div class="card-grid card-grid--single">
+          <article class="project-card" data-hover-card>
+            <div class="placeholder-box" data-placeholder>
+              <span class="placeholder-icon">▤</span>
+              <p>[Add DAM Screenshot/Case Study Here Later]</p>
+            </div>
+            <div class="project-card-body">
+              <p class="project-tag mono">Asset Management</p>
+              <h3 class="project-title">Global Asset Library Rebuild</h3>
+              <p class="project-desc">
+                Restructured a multi-market digital asset library, introducing a
+                consistent taxonomy and metadata standard for faster creative reuse.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         RESUME / CV SECTION
+         Purpose: a single, focused section whose only job is to get
+         a visitor to download your resume. Kept deliberately short -
+         unlike the project sections above, there's nothing to browse
+         here, just one clear action.
+
+         HOW THE DOWNLOAD ACTUALLY WORKS:
+         The <a> tag below points at a real PDF file using `href`, and
+         has a `download` attribute. Two things make this "just work"
+         with ZERO JavaScript:
+           1. `href="assets/resume/Ankit-Mishra-Resume.pdf"` - tells the
+              browser WHERE the file is (a relative path from index.html).
+           2. `download="Ankit-Mishra-Resume.pdf"` - tells the browser
+              to SAVE the file to the visitor's computer instead of
+              navigating to/opening it in a new tab, and what filename
+              to give the saved copy.
+         WITHOUT the `download` attribute, clicking the link would just
+         open the PDF in the browser's built-in PDF viewer (still fine,
+         but the visitor would have to manually choose "Save As" instead
+         of it downloading immediately).
+
+         IMPORTANT - REPLACE THE PLACEHOLDER FILE:
+         A placeholder PDF already exists at
+         assets/resume/Ankit-Mishra-Resume.pdf so this button works out
+         of the box and doesn't 404. Replace that file with your real
+         resume PDF, using the EXACT SAME filename (or update both the
+         `href` and `download` values below if you rename it).
+    ========================================================= -->
+    <section class="section section--alt" id="resume">
+      <div class="section-inner section-inner--narrow" style="text-align:center;">
+        <header class="section-head" data-reveal style="margin: 0 auto var(--space-lg); text-align:center;">
+          <p class="eyebrow mono" style="justify-content:center; width:100%;">Resume</p>
+          <h2 class="section-title">Want the full picture?</h2>
+          <p class="section-sub">
+            Download my resume for a complete rundown of my experience, tools and projects.
+          </p>
+        </header>
+
+        <!-- The `magnetic` class reuses the exact same GSAP hover pull
+             effect already applied to the hero/contact buttons (see
+             initMagneticButtons() in js/script.js) - no extra JS needed
+             for this button, it's picked up automatically because it
+             shares that class. -->
+        <a
+          href="assets/resume/Ankit-Mishra-Resume.pdf"
+          download="Ankit-Mishra-Resume.pdf"
+          class="btn btn-primary magnetic"
+          data-reveal
+        >
+          Download Resume
+        </a>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SKILLS / TECH STRIP
+         A simple auto-scrolling marquee of tools/technologies.
+         WHY: a fast, scannable summary of the whole toolkit in one
+         glance, animated with a GSAP infinite tween (see
+         js/script.js -> initMarquee()).
+    ========================================================= -->
+    <section class="section section--tight" id="skills">
+      <div class="section-inner">
+        <p class="eyebrow mono" data-reveal style="text-align:center;">Toolkit</p>
+      </div>
+      <div class="marquee" aria-hidden="true">
+        <!-- Two identical .marquee-track elements sit side by side.
+             JS animates them left together, and because they are identical
+             and seamlessly adjacent, the loop looks infinite with no jump-cut.
+             Removing the duplicate track would cause a visible "gap/snap"
+             at the end of each loop. -->
+        <div class="marquee-track">
+          <span>SFMC</span><span>Mailchimp</span><span>SAP</span><span>Dynamics 365</span>
+          <span>Litmus</span><span>Email on Acid</span><span>Validity</span>
+          <span>GSAP</span><span>Google Web Designer</span><span>Celtra</span>
+          <span>Adobe Animate</span><span>HTML5</span><span>CSS3</span><span>JavaScript</span>
+        </div>
+        <div class="marquee-track" aria-hidden="true">
+          <span>SFMC</span><span>Mailchimp</span><span>SAP</span><span>Dynamics 365</span>
+          <span>Litmus</span><span>Email on Acid</span><span>Validity</span>
+          <span>GSAP</span><span>Google Web Designer</span><span>Celtra</span>
+          <span>Adobe Animate</span><span>HTML5</span><span>CSS3</span><span>JavaScript</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         CONTACT SECTION
+         Purpose: final conversion point of the page. Keep it short -
+         a long form here would lose visitors this late in the scroll.
+    ========================================================= -->
+    <section class="section" id="contact">
+      <div class="section-inner section-inner--narrow">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow mono">Get in touch</p>
+          <h2 class="section-title">Let's build your next campaign.</h2>
+          <p class="section-sub">
+            Have an email, banner, or digital asset project in mind? I'd love to hear about it.
+          </p>
+        </header>
+
+        <!-- Contact form, now wired to a real backend.
+             WHY data-api-endpoint instead of the plain HTML `action`
+             attribute: this form is submitted with JavaScript (fetch),
+             NOT a normal browser form submission (see initContactForm()
+             in js/script.js). Using a data-* attribute keeps the backend
+             URL configurable in one place without hardcoding it inside
+             script.js - if you move/rename the backend, you only edit
+             this one line, not the JS file.
+             novalidate is left off on purpose so the browser's built-in
+             HTML5 validation (required fields, email format) still runs
+             BEFORE our JS even tries to submit anything. -->
+        <form class="contact-form" id="contactForm" data-reveal data-api-endpoint="http://localhost:5000/api/contact">
+          <div class="form-row">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required />
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          </div>
+          <div class="form-row">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="4" placeholder="Tell me about your project..." required></textarea>
+          </div>
+
+          <!-- Status message area: hidden by default, filled in and shown
+               by JS after the form is submitted (success or error state).
+               Kept in the HTML (rather than created dynamically in JS)
+               so it always has a fixed, predictable place in the layout -
+               it just toggles the .is-visible class on/off. -->
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+
+          <!-- type="submit" triggers the form's 'submit' event, which
+               js/script.js listens for and intercepts with
+               e.preventDefault() (see initContactForm()). -->
+          <button type="submit" class="btn btn-primary magnetic" id="contactSubmitBtn">
+            <span class="btn-label">Send Message</span>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===========================================================
+       FOOTER
+  =========================================================== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; <span id="year"></span> Ankit Mishra. Built with HTML5, CSS3 &amp; GSAP.</p>
+      <div class="footer-links">
+        <a href="#hero" data-scroll>Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===========================================================
+       SCRIPTS
+       Order matters here:
+       1. GSAP core library
+       2. GSAP ScrollTrigger plugin (extends GSAP with scroll-based triggers)
+       3. Our own script.js LAST, so by the time it runs, `gsap` and
+          `ScrollTrigger` already exist on the `window` object.
+       Loading our script.js before GSAP would cause "gsap is not defined"
+       errors, because the browser executes <script> tags in order.
+  =========================================================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
